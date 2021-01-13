@@ -8,7 +8,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| suffix(black_box(&string)).unwrap())
     });
     c.bench_function("suffix_rust_short", |b| {
-        b.iter(|| suffix_rs(black_box(&string)).unwrap())
+        b.iter(|| suffix_rs(black_box(&string), None).unwrap())
     });
 
     let string = std::fs::read_to_string("data/eighty.txt").unwrap();
@@ -16,7 +16,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| suffix(black_box(&string)).unwrap())
     });
     c.bench_function("suffix_rust_long", |b| {
-        b.iter(|| suffix_rs(black_box(&string)).unwrap())
+        b.iter(|| suffix_rs(black_box(&string), None).unwrap())
     });
 }
 

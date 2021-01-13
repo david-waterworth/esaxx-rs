@@ -102,13 +102,17 @@ pub struct Suffix<T> {
 
 /// Creates the suffix array and provides an iterator over its items (Rust version)
 /// See [suffix](fn.suffix.html)
-pub fn suffix_rs(string: &str) -> Result<Suffix<usize>, SuffixError> {
+pub fn suffix_rs(string: &str, eos: Option<char>) -> Result<Suffix<usize>, SuffixError> {
     let chars: Vec<_> = string.chars().collect();
     let n = chars.len();
     let mut sa = vec![0; n];
     let mut l = vec![0; n];
     let mut r = vec![0; n];
     let mut d = vec![0; n];
+    let ieos = match eos {
+        Some(x) => Some(x as u32),
+        None => None
+    };
     let alphabet_size = 0x110000; // All UCS4 range.
     let node_num = esaxx_rs(
         &chars.iter().map(|c| *c as u32).collect::<Vec<_>>(),
@@ -117,6 +121,7 @@ pub fn suffix_rs(string: &str) -> Result<Suffix<usize>, SuffixError> {
         &mut r,
         &mut d,
         alphabet_size,
+        ieos
     )?;
     Ok(Suffix {
         chars,
@@ -292,7 +297,7 @@ mod tests {
         let mut d = vec![0; n];
         let alphabet_size = 0x110000; // All UCS4 range.
 
-        let node_num = esaxx_rs(&chars, &mut sa, &mut l, &mut r, &mut d, alphabet_size).unwrap();
+        let node_num = esaxx_rs(&chars, &mut sa, &mut l, &mut r, &mut d, alphabet_size, None).unwrap();
         println!("Node num {}", node_num);
         println!("sa {:?}", sa);
         println!("l {:?}", l);
@@ -316,7 +321,7 @@ mod tests {
         let mut d = vec![0; n];
         let alphabet_size = 0x110000; // All UCS4 range.
 
-        let node_num = esaxx_rs(&chars, &mut sa, &mut l, &mut r, &mut d, alphabet_size).unwrap();
+        let node_num = esaxx_rs(&chars, &mut sa, &mut l, &mut r, &mut d, alphabet_size, None).unwrap();
         assert_eq!(chars.len(), 574);
         assert_eq!(node_num, 260);
         // assert_eq!(sa, vec![10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);
@@ -346,7 +351,7 @@ mod tests {
 
     #[test]
     fn test_suffix_rs() {
-        let suffix = suffix_rs("abracadabra").unwrap();
+        let suffix = suffix_rs("abracadabra", None).unwrap();
         assert_eq!(suffix.node_num, 5);
         assert_eq!(suffix.sa, vec![10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);
         assert_eq!(suffix.l, vec![1, 0, 5, 9, 0, 0, 3, 0, 0, 0, 2]);
@@ -366,6 +371,26 @@ mod tests {
     #[test]
     fn test_out_of_bounds_bug() {
         let string = "banana$band$$";
-        suffix_rs(&string).unwrap();
+        suffix_rs(&string, None).unwrap();
+    }
+
+    #[test]
+    fn test_eos() {
+        let string = "cat$bat$sat$fat$fan$";
+        let suffix = suffix_rs(&string, Some('$')).unwrap();
+        assert_eq!(suffix.node_num, 5);
+        assert_eq!(suffix.sa, vec![19, 3, 15, 11, 7, 17, 1, 13, 9, 5, 4, 0, 16, 12, 18, 8, 2, 14, 10, 6]);
+        assert_eq!(suffix.l, vec![6, 5, 12, 16, 0, 0, 1, 2, 2, 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1]);
+        assert_eq!(suffix.r, vec![10, 10, 14, 20, 20, 2, 1, 0, 0, 2, 1, 0, 2, 2, 1, 0, 0, 0, 0, 0]);
+        assert_eq!(suffix.d, vec![2, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+        let mut iter = suffix.iter();
+        let chars: Vec<_> = string.chars().collect();
+        assert_eq!(iter.next(), Some((&chars[1..3], 4))); // at
+        assert_eq!(iter.next(), Some((&chars[17..18], 5))); // a
+        assert_eq!(iter.next(), Some((&chars[12..14], 2))); // fa
+        assert_eq!(iter.next(), Some((&chars[2..3], 4))); // t
+        assert_eq!(iter.next(), Some((&chars[..0], 20))); // ''
+        assert_eq!(iter.next(), None);
     }
 }

@@ -2,6 +2,7 @@ use crate::sais::saisxx;
 use crate::types::{SArray, StringT, SuffixError};
 use std::convert::TryInto;
 
+
 fn suffixtree(
     string: &StringT,
     suffix_array: &mut SArray,
@@ -9,6 +10,7 @@ fn suffixtree(
     right: &mut SArray,
     depth: &mut SArray,
     n: usize,
+    eos: Option<u32>
 ) -> usize {
     if n == 0 {
         return 0;
@@ -25,7 +27,9 @@ fn suffixtree(
     let mut h = 0;
     for i in 0..n {
         let j = left[i];
-        while i + h < n && j + h < n && string[i + h] == string[j + h] {
+        while i + h < n && j + h < n && string[i + h] == string[j + h] &&
+            (eos.is_some() && string[i + h] != eos.unwrap())
+        {
             h += 1;
         }
         right[i] = h;
@@ -83,9 +87,10 @@ pub(crate) fn esaxx_rs(
     right: &mut SArray,
     depth: &mut SArray,
     k: usize,
+    eos: Option<u32>
 ) -> Result<usize, SuffixError> {
     let n = string.len();
     saisxx(string, suffix_array, n, k)?;
-    let node_num = suffixtree(string, suffix_array, left, right, depth, n);
+    let node_num = suffixtree(string, suffix_array, left, right, depth, n, eos);
     Ok(node_num)
 }

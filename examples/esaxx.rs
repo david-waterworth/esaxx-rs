@@ -10,7 +10,7 @@ fn main() {
 
     let string = fs::read_to_string(filename).unwrap();
     let (count, version) = if version == "rust" {
-        (suffix_rs(&string).unwrap().iter().count(), "Rust")
+        (suffix_rs(&string, None).unwrap().iter().count(), "Rust")
     } else {
         (suffix(&string).unwrap().iter().count(), "Cpp")
     };
