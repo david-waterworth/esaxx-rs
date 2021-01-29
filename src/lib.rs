@@ -368,4 +368,10 @@ mod tests {
         let string = "banana$band$$";
         suffix_rs(&string).unwrap();
     }
+
+    #[test]
+    fn test_delimiters() {
+        let string = "ahu-1-1-znt\0ahu-1-1-sat\0ahu-1-2-znt\0ahu-1-2-sat\0";
+        suffix_rs(&string).unwrap();
+    }
 }

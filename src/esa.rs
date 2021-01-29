@@ -1,6 +1,7 @@
 use crate::sais::saisxx;
 use crate::types::{SArray, StringT, SuffixError};
 use std::convert::TryInto;
+use std::collections::HashSet;
 
 fn suffixtree(
     string: &StringT,
@@ -19,14 +20,35 @@ fn suffixtree(
     for i in 1..n {
         left[suffix_array[i]] = suffix_array[i - 1];
     }
+
     // Compare at most 2n log n charcters. Practically fastest
     // "Permuted Longest-Common-Prefix Array", Juha Karkkainen, CPM 09
     // PLCP = r
+    let terminator = '\0' as u32;                 // LCP cannot include '▁' 
+    let delims: HashSet<u32> = vec![
+        '-' as u32, 
+        '_' as u32,
+        '.' as u32,
+        '/' as u32,
+        '\'' as u32,
+        ' ' as u32,       // this breaks most of the tests which contain spaces!
+        ].into_iter().collect();
+
     let mut h = 0;
     for i in 0..n {
-        let j = left[i];
-        while i + h < n && j + h < n && string[i + h] == string[j + h] {
-            h += 1;
+        if string[i] == terminator || delims.contains(&string[i]) {
+            // cannot start prefix on a delimiter or string seperator
+            h = 0;
+        } else {
+            let j = left[i];
+            while i + h < n && j + h < n && string[i + h] == string[j + h] 
+                && string[j + h] != terminator {
+                h += 1;
+            }
+            // cannot terminate on a delimiter - backup
+            while h > 0 && delims.contains(&string[i + h - 1]) {
+                h -= 1;
+            }
         }
         right[i] = h;
         if h > 0 {

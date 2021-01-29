@@ -1,18 +1,43 @@
-use esaxx_rs::{suffix, suffix_rs};
-use std::env::args;
-use std::fs;
+use esaxx_rs::suffix_rs;
+
+
+pub struct ExtendedSuffixArray<T> {
+    pub chars: Vec<char>,
+    pub sa: Vec<T>,
+    pub l: Vec<T>,
+    pub r: Vec<T>,
+    pub d: Vec<T>,
+    pub node_num: usize,
+}
 
 fn main() {
-    // Prints each argument on a separate line
-    let args: Vec<_> = args().skip(1).collect();
-    let version = &args[0];
-    let filename = &args[1];
+    let string = "▁ahu-1-1-znt▁ahu-1-1-sat▁ahu-1-2-znt▁ahu-1-2-sat▁ahu-2-1-sat";
+    let esa = suffix_rs(&string).unwrap();
 
-    let string = fs::read_to_string(filename).unwrap();
-    let (count, version) = if version == "rust" {
-        (suffix_rs(&string).unwrap().iter().count(), "Rust")
-    } else {
-        (suffix(&string).unwrap().iter().count(), "Cpp")
+    let suffix_exposed: ExtendedSuffixArray<usize> = unsafe {
+        std::mem::transmute(esa)
     };
-    println!("Used {} version ! Found {} nodes", version, count);
+    
+    let S = suffix_exposed.chars;
+    let SA = suffix_exposed.sa;
+    let R = suffix_exposed.r;
+    let L = suffix_exposed.l;
+    let D = suffix_exposed.d;
+    let n = S.len();
+
+    println!("SA\tsuffix");
+    for i in 0..n {
+        let suffix: String = S[SA[i]..n].iter().collect();
+        println!("{:?}\t{:?}", SA[i], suffix);
+    }
+
+    println!("i\tfreq\tlen\tsubstring");
+    for i in 0..suffix_exposed.node_num {
+        let beg = SA[L[i]]; 
+        let len = D[i];
+        let freq = R[i] - L[i];
+
+        let substring: String = S[beg..beg+len].iter().collect();
+        println!("{:?}\t{:?}\t{:?}\t{:?}", i, freq, len, substring);
+    }
 }
