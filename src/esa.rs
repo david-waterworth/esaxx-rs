@@ -26,7 +26,7 @@ fn suffixtree(
     // PLCP = r
     let mut h = 0;
     for i in 0..n {
-        if eos.is_some() && string[i] != eos.unwrap() {
+        if eos.is_some() && string[i] == eos.unwrap() {
             continue;
         }
         
